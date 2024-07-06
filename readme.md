@@ -90,6 +90,27 @@ app.listen(PORT, () => {
 });
 ```
 
+### 3. Connectdb function for database connection
+
+```js
+const mongoose = require("mongoose");
+
+const connectDb = (CONNECTION_STRING) => {
+  mongoose
+    .connect(CONNECTION_STRING)
+    .then((conn) => {
+      console.log(
+        `Database connection successful on link : ${CONNECTION_STRING}`
+      );
+    })
+    .catch((err) => {
+      console.log("There was a problem while connecting to the database", err);
+    });
+};
+
+module.exports = connectDb;
+```
+
 ## Documentation for Functions
 
 ### `initiateRegistration`
