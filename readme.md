@@ -22,7 +22,8 @@ JWT_EXPIRES_IN=7d                                    # Expiry time for JWT token
 EMAIL_USER=your_email@example.com                    # Email address for sending verification emails
 EMAIL_PASS=your_email_password_or_app_password       # Password or app-specific password for the above email
 HOST=http://localhost:8000                           # Base URL for your application
-EMAIL_VERIFICATION_ROUTE=/verify-email               # Route for email verification link
+EMAIL_VERIFICATION_ROUTE=verify-email               # Route for email verification link
+LOGIN_URL=https://www.instagram.com/                #Login page link of your application
 ```
 
 ## Usage
@@ -42,8 +43,8 @@ const {
   changePassword,
 } = require("express-jwt-authenticator");
 
-// Load environment variables from .env file
-require("dotenv").config();
+// Adding Config File Contents to process
+require("dotenv").config({ path: "./config.env" });
 ```
 
 ### 2. Write a JSON middleware for accessing json data
