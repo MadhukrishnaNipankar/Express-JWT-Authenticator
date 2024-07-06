@@ -1,8 +1,7 @@
-// Controllers/Auth/authController.js
-
 const { promisify } = require("util");
 const jwt = require("jsonwebtoken");
 const User = require("../Models/authModel");
+const sendEmail = require("../Services/mail");
 
 const signToken = (id) => {
   const token = jwt.sign({ id: id }, process.env.JWT_SECRET, {
@@ -35,7 +34,7 @@ exports.initiateRegistration = async (req, res, next) => {
     const token = generateEmailVerificationToken(email, password);
 
     // Construct verification link using configured route
-    const verificationLink = `${process.env.EMAIL_VERIFICATION_ROUTE}/${token}`;
+    const verificationLink = `${process.env.HOST}/${process.env.EMAIL_VERIFICATION_ROUTE}/${token}`;
 
     const from = process.env.EMAIL_USER;
     const to = email;
@@ -89,14 +88,14 @@ exports.completeRegistration = async (req, res, next) => {
 
     console.log("User registered successfully:", newUser);
 
-    res.status(201).json({
+    return res.status(201).json({
       status: "success",
       message: "User account created successfully.",
-      data: null,
+      data: newUser,
     });
   } catch (error) {
     console.error("Error completing registration:", error.message);
-    res.status(500).json({
+    return res.status(500).json({
       status: "fail",
       message: "Failed to complete registration. Please try again later.",
       error: error.message,
