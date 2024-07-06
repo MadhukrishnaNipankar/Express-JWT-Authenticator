@@ -2,6 +2,15 @@ const { promisify } = require("util");
 const jwt = require("jsonwebtoken");
 const User = require("../Models/authModel");
 const sendEmail = require("../Services/mail");
+const {
+  getInvalidLinkHTML,
+  getAccountAlreadyVerifiedHTML,
+  getRegistrationCompleteHTML,
+  getLinkExpiredHTML,
+  getInvalidTokenHTML,
+  getRegistrationFailedHTML,
+  getVerificationEmailHTML,
+} = require("../htmlTemplates");
 
 const signToken = (id) => {
   const token = jwt.sign({ id: id }, process.env.JWT_SECRET, {
@@ -13,13 +22,31 @@ const signToken = (id) => {
 
 const generateEmailVerificationToken = (email, password) => {
   return jwt.sign({ email, password }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN,
+    expiresIn: "3m",
   });
 };
 
 exports.initiateRegistration = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        status: "fail",
+        message: "both email and password are required.",
+        data: null,
+      });
+    }
+
+    // if account already registered, return with appropriate message
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Account already registered.",
+        data: null,
+      });
+    }
 
     // Validate email format
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -40,7 +67,7 @@ exports.initiateRegistration = async (req, res, next) => {
     const to = email;
     const subject = "Account Verification";
     const text = `Verify Email`;
-    const html = `<p>Please click on the following <a href="${verificationLink}">link</a> to verify your email.</p>`;
+    const html = getVerificationEmailHTML(verificationLink);
     const user = process.env.EMAIL_USER;
     const pass = process.env.EMAIL_PASS;
 
@@ -72,35 +99,40 @@ exports.completeRegistration = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     if (!decoded.email || !decoded.password) {
-      return res.status(400).json({
-        status: "fail",
-        message:
-          "Invalid Link. Unable to verify. Please again generate the request",
-        data: null,
-      });
+      return res.status(400).send(getInvalidLinkHTML());
+    }
+
+    // Check if the user already exists
+    const existingUser = await User.findOne({ email: decoded.email });
+    if (existingUser) {
+      return res
+        .status(400)
+        .send(getAccountAlreadyVerifiedHTML(process.env.LOGIN_URL));
     }
 
     // Create user in the database
     const newUser = await User.create({
       email: decoded.email,
-      password: decoded.password,
+      password: decoded.password, // Ensure this is already hashed before storing
     });
 
     console.log("User registered successfully:", newUser);
 
-    return res.status(201).json({
-      status: "success",
-      message: "User account created successfully.",
-      data: newUser,
-    });
+    return res
+      .status(201)
+      .send(getRegistrationCompleteHTML(process.env.LOGIN_URL));
   } catch (error) {
     console.error("Error completing registration:", error.message);
-    return res.status(500).json({
-      status: "fail",
-      message: "Failed to complete registration. Please try again later.",
-      error: error.message,
-      data: null,
-    });
+    if (error instanceof jwt.TokenExpiredError) {
+      console.error("Token expired:", error.message);
+      return res.status(400).send(getLinkExpiredHTML());
+    } else if (error instanceof jwt.JsonWebTokenError) {
+      console.error("Invalid token:", error.message);
+      return res.status(400).send(getInvalidTokenHTML());
+    } else {
+      console.error("Error completing registration:", error.message);
+      return res.status(500).send(getRegistrationFailedHTML(error.message));
+    }
   }
 };
 
@@ -158,7 +190,9 @@ exports.login = async (req, res, next) => {
 exports.changePassword = async (req, res, next) => {
   try {
     const { oldPassword, newPassword } = req.body;
-    const userId = req.user.id; // Assuming user ID is available in request
+    const userId = req.user.id;
+
+    console.log(userId);
 
     // Check if both oldPassword and newPassword are provided
     if (!oldPassword || !newPassword) {
@@ -171,7 +205,7 @@ exports.changePassword = async (req, res, next) => {
 
     // Find the user by userId
     const user = await User.findById(userId).select("+password");
-
+    console.log(user);
     // If user not found
     if (!user) {
       return res.status(404).json({
@@ -259,9 +293,9 @@ exports.protect = async (req, res, next) => {
     next();
   } catch (error) {
     res.status(500).json({
+      status: "fail",
       error: "Something went wrong! Please try again later",
       error: error.message,
-      status: "Server Error",
     });
     return next();
   }

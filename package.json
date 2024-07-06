@@ -1,6 +1,6 @@
 {
   "name": "express-jwt-authenticator",
-  "version": "1.1.6",
+  "version": "1.1.8",
   "description": "express-jwt-authenticator is a powerful and secure Node.js authentication package that simplifies the implementation of JSON Web Token (JWT) based authentication in your applications. It provides a robust and flexible solution for user registration, login, and protected route management, ensuring a seamless and secure user experience.",
   "main": "index.js",
   "dependencies": {
@@ -47,7 +47,7 @@
     "escape-string-regexp": "^1.0.5",
     "esutils": "^2.0.3",
     "etag": "^1.8.1",
-    "express": "^4.18.2",
+    "express": "^4.19.2",
     "fill-range": "^7.0.1",
     "finalhandler": "^1.2.0",
     "forwarded": "^0.2.0",
@@ -169,7 +169,8 @@
     "authentication",
     "register",
     "login",
-    "protect"
+    "protect",
+    "verify email"
   ],
   "author": "Madhukrishna Nipankar",
   "license": "ISC"
