@@ -58,19 +58,15 @@ app.use(express.json()); // Middleware to parse JSON bodies
 
 ### 3. Make sure, your express application is running and is successfully connected to the database
 
-### 4. Use the Authentication Methods in Your Express App
+### 4. Use the Authentication Methods in Your Express App/Sample Usage
 
 Integrate the provided authentication functions into your Express application by setting up routes as shown below:
 
 ```js
-// Import necessary modules
 const express = require("express");
 const app = express();
 
-// Ensure to parse JSON bodies
-app.use(express.json());
-
-// Import the authentication functions
+app.use(express.json()); // Middleware to parse JSON bodies
 const {
   initiateRegistration,
   completeRegistration,
@@ -80,11 +76,28 @@ const {
   changePassword,
 } = require("express-jwt-authenticator");
 
+// Adding Config File Contents to process
+require("dotenv").config({ path: "./config.env" });
+
+const PORT = process.env.PORT || 8000;
+const CONNECTION_STRING = process.env.CONNECTION_STRING;
+
+const connectDb = require("./db");
+
+// Load environment variables from .env file
+require("dotenv").config();
+
+// Database Connection
+connectDb(CONNECTION_STRING);
+
 // Route to initiate user registration
 app.post("/initiateRegistration", initiateRegistration);
 
 // Route to complete registration (typically through email verification)
-app.get(`${process.env.EMAIL_VERIFICATION_ROUTE}/:token`, completeRegistration);
+app.get(
+  `/${process.env.EMAIL_VERIFICATION_ROUTE}/:token`,
+  completeRegistration
+);
 
 // Route to login and obtain a JWT token
 app.post("/login", login);
@@ -98,6 +111,10 @@ app.delete("/delete", protect, deleteUserAccount);
 // Example of a protected route that only authenticated users can access
 app.get("/myroute", protect, (req, res) => {
   res.send("Protected route, only authenticated users can access this.");
+});
+
+app.listen(PORT, () => {
+  console.log(`Application listening on port ${PORT}`);
 });
 ```
 
