@@ -1,125 +1,217 @@
 # express-jwt-authenticator
 
-**express-jwt-authenticator** is a powerful and secure Node.js authentication package that simplifies the implementation of JSON Web Token (JWT) based authentication in your applications. It provides a robust and flexible solution for user registration, login, and protected route management, ensuring a seamless and secure user experience.
+express-jwt-authenticator is a powerful and secure Node.js authentication package that simplifies the implementation of JSON Web Token (JWT) based authentication in your applications. It provides a robust and flexible solution for user registration, login, and protected route management, ensuring a seamless and secure user experience.
 
-Provides you Methods for _register_,_login_ _deleteUserAccount_ and a middleware for protecting other routes named _protect_.
+Provides you Methods for _registration_, _login_, _user account deletion_, _password change_, _password verification through email_ and a middleware for protecting other routes named _protect_.
 
 ## Installation
 
-To use this package in your Node.js project, you can install it via npm.
+To integrate `express-jwt-authenticator` into your Node.js project, install it via npm:
 
 ```bash
-npm i express-jwt-authenticator
+npm install express-jwt-authenticator
 ```
 
-## Functions Provided
+## Configuration
 
-### Register a New User
+Before using `express-jwt-authenticator`, make sure to set up the following environment variables in your project in .env file:
 
-- **Function name:** `register`
-- **Method required:** `POST`
-- **Description:** Register a new user with an email and password.
-- **Request Body:**
-  - `email` (required): The email address of the user to register.
-  - `password` (required): The password for the user account.
-
-### Login
-
-- **Function name:** `login`
-- **Method required:** `POST`
-- **Description:** Login with an email and password to get a JWT token.
-- **Request Body:**
-  - `email` (required): The email address of the user.
-  - `password` (required): The password for the user account.
-
-### Protected Route
-
-You can use this as a middleware to protect all your routes. Call this just before your custom functions, and it will take care of your stateless authentication
-
-- **Function name:** `protected`
-- **Description:** A protected middleware function that requires a valid JWT token for access.
-- **Request Headers:**
-  - `Authorization`: The JWT token should be included in the `Authorization` header in the format `Bearer <token>`.
-
-### Delete User Account
-
-- **Function name:** `delete`
-- **Method required:** `DELETE`
-- **Description:** Delete the authenticated user's account.
-- **Request Headers:**
-  - `Authorization`: The JWT token should be included in the `Authorization` header in the format `Bearer <token>`.
+```dotenv
+JWT_SECRET=your_jwt_secret                           # Secret key used to sign JWT tokens
+JWT_EXPIRES_IN=7d                                    # Expiry time for JWT tokens (e.g., "1d", "2h")
+EMAIL_USER=your_email@example.com                    # Email address for sending verification emails
+EMAIL_PASS=your_email_password_or_app_password       # Password or app-specific password for the above email
+HOST=http://localhost:8000                           # Base URL for your application
+EMAIL_VERIFICATION_ROUTE=/verify-email               # Route for email verification link
+```
 
 ## Usage
 
-To get started with jwt-auth, follow the steps below:
+### 1. Importing Functions and Loading Environment Variables
 
-1. Install the package as shown in the **Installation** section.
-
-2. Import the required modules and functions in your project:
+After installing `express-jwt-authenticator`, import the necessary functions into your project. Make sure to load your environment variables using a package like `dotenv`.
 
 ```js
+// Import the required functions
 const {
-  User,
-  register,
+  initiateRegistration,
+  completeRegistration,
   login,
   protect,
   deleteUserAccount,
-} = require("jwt-auth");
+  changePassword,
+} = require("express-jwt-authenticator");
+
+// Load environment variables from .env file
+require("dotenv").config();
 ```
 
-3. Connect to your MongoDB database using mongoose and specify the CONNECTION_STRING environment variable.
-
-```js
-const mongoose = require("mongoose");
-const CONNECTION_STRING = process.env.CONNECTION_STRING;
-
-mongoose
-  .connect(CONNECTION_STRING, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    useCreateIndex: true,
-  })
-  .then(() => {
-    console.log("Connected to MongoDB!");
-  })
-  .catch((err) => {
-    console.error("Error connecting to MongoDB:", err);
-  });
-```
-
-4. Define your Express app and middleware, and set up the required environment variables:
+### 2. Write a JSON middleware for accessing json data
 
 ```js
 const express = require("express");
 const app = express();
-require("dotenv").config({ path: "./config.env" });
+
+app.use(express.json()); // Middleware to parse JSON bodies
 ```
 
-5.  Implement the authentication routes in your Express app:
+### 3. Make sure, your express application is running and is successfully connected to the database
+
+### 4. Use the Authentication Methods in Your Express App
+
+Integrate the provided authentication functions into your Express application by setting up routes as shown below:
 
 ```js
-app.post("/register", register);
+// Import necessary modules
+const express = require("express");
+const app = express();
+
+// Ensure to parse JSON bodies
+app.use(express.json());
+
+// Import the authentication functions
+const {
+  initiateRegistration,
+  completeRegistration,
+  login,
+  protect,
+  deleteUserAccount,
+  changePassword,
+} = require("express-jwt-authenticator");
+
+// Route to initiate user registration
+app.post("/initiateRegistration", initiateRegistration);
+
+// Route to complete registration (typically through email verification)
+app.get(`${process.env.EMAIL_VERIFICATION_ROUTE}/:token`, completeRegistration);
+
+// Route to login and obtain a JWT token
 app.post("/login", login);
-app.get("/myroute", protected, () => {
-  "Protected route, only authenticated users can access!";
-});
+
+// Route to change the user's password (protected)
+app.post("/change-password", protect, changePassword);
+
+// Route to delete the authenticated user's account (protected)
 app.delete("/delete", protect, deleteUserAccount);
-```
 
-6.  Start your server:
-
-```js
-const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// Example of a protected route that only authenticated users can access
+app.get("/myroute", protect, (req, res) => {
+  res.send("Protected route, only authenticated users can access this.");
 });
 ```
 
-## Required Environment Variables
+## Documentation for Functions
 
-This package requires the following environment variables to be set in your project:
+### `initiateRegistration`
 
-- **JWT_SECRET**: A secret key used to sign the JWT tokens for secure authentication.
-- **JWT_EXPIRES_IN**: The expiration time for the JWT tokens in the format "1d", "2h", etc.
-- **CONNECTION_STRING**: The MongoDB connection string for connecting to your database.
-  Please make sure to set these variables in your project's environment or in a configuration file like **config.env**
+- **Description:** Initiates the user registration process by generating a verification email.
+- **Method:** `POST`
+- **Route:** `/initiateRegistration`
+- **Request Body:**
+  - `email` (string, required): The email address of the user.
+  - `password` (string, required): The password for the user account.
+- **Response:**
+  - **Success:**
+    - `status`: `"success"`
+    - `message`: `"Verification email sent successfully. Please check your email."`
+  - **Failure:**
+    - `status`: `"fail"`
+    - `message`: Detailed error message explaining the failure.
+
+**Example Request:**
+
+```json
+{
+  "email": "user@example.com",
+  "password": "securePassword123"
+}
+```
+
+### `completeRegistration`
+
+This route would be hit by the user through the link sent to him on his/her email for verification.
+
+- **Description:** Completes the registration process by verifying the email and creating the user.
+- **Method:** `POST`
+- **Route:** `/completeRegistration`
+- **Request Body:**
+  - `token` (string, required): The email verification token sent to the user's email.
+- **Response:**
+  - **Success:**
+    - `status`: `"success"`
+    - `message`: `"User account created successfully."`
+  - **Failure:**
+    - `status`: `"fail"`
+    - `message`: `"Invalid or expired verification token."`
+
+### `login`
+
+- **Description:** Logs in a user with their email and password to obtain a JWT token.
+- **Method:** `POST`
+- **Route:** `/login`
+- **Request Body:**
+  - `email` (string, required): The email address of the user.
+  - `password` (string, required): The password for the user account.
+- **Response:**
+  - **Success:**
+    - `token` (string): JWT token for authenticated access.
+    - `status`: `"success"`
+  - **Failure:**
+    - `status`: `"fail"`
+    - `error`: Detailed error message explaining the failure.
+
+**Example Request:**
+
+```json
+{
+  "email": "user@example.com",
+  "password": "securePassword123"
+}
+```
+
+### `changePassword`
+
+- **Description:** Changes the password for the authenticated user.
+- **Method:** `POST`
+- **Route:** `/changePassword`
+- **Request Body:**
+  - `oldPassword` (string, required): The current password of the user.
+  - `newPassword` (string, required): The new password to be set for the user account.
+- **Response:**
+  - **Success:**
+    - `status`: `"success"`
+    - `message`: `"Password updated successfully."`
+  - **Failure:**
+    - `status`: `"fail"`
+    - `message`: Detailed error message explaining the failure.
+
+**Example Request:**
+
+```json
+{
+  "oldPassword": "currentPassword123",
+  "newPassword": "newSecurePassword456"
+}
+```
+
+### `deleteUserAccount`
+
+- **Description:** Deletes the account of the authenticated user.
+- **Method:** `DELETE`
+- **Route:** `/deleteUserAccount`
+- **Request Headers:**
+  - `Authorization` (string, required): JWT token in the format `"Bearer <token>"` for authentication.
+- **Response:**
+  - **Success:**
+    - `status`: `"success"`
+    - `message`: `"User account deleted successfully."`
+  - **Failure:**
+    - `status`: `"fail"`
+    - `message`: Detailed error message explaining the failure.
+
+**Example Request:**
+
+```http
+DELETE /deleteUserAccount
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```

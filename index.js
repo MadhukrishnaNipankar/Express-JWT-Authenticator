@@ -1,8 +1,10 @@
 // Import required modules
 const User = require("./Models/authModel");
 const {
-  register,
+  initiateRegistration,
+  completeRegistration,
   login,
+  changePassword,
   protect,
   deleteUserAccount,
 } = require("./Controllers/authControllers");
@@ -10,8 +12,10 @@ const {
 // Export the User model and authentication functions
 module.exports = {
   User,
-  register,
+  initiateRegistration,
+  completeRegistration,
   login,
+  changePassword,
   protect,
   deleteUserAccount,
 };

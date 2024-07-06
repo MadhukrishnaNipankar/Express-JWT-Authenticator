@@ -12,29 +12,95 @@ const signToken = (id) => {
   return token;
 };
 
-exports.register = async (req, res, next) => {
-  try {
-    // extracting data from request object
-    const { email, password } = req.body;
-    console.log(email, password);
-    const newUser = await User.create({
-      email,
-      password,
-    });
-    console.log("User registered successfully:", newUser);
+const generateEmailVerificationToken = (email, password) => {
+  return jwt.sign({ email, password }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN,
+  });
+};
 
-    const token = signToken(newUser._id);
+exports.initiateRegistration = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    // Validate email format
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Please provide a valid email address.",
+        data: null,
+      });
+    }
+
+    // Generate token based on email and plaintext password
+    const token = generateEmailVerificationToken(email, password);
+
+    // Construct verification link using configured route
+    const verificationLink = `${process.env.EMAIL_VERIFICATION_ROUTE}/${token}`;
+
+    const from = process.env.EMAIL_USER;
+    const to = email;
+    const subject = "Account Verification";
+    const text = `Verify Email`;
+    const html = `<p>Please click on the following <a href="${verificationLink}">link</a> to verify your email.</p>`;
+    const user = process.env.EMAIL_USER;
+    const pass = process.env.EMAIL_PASS;
+
+    // Call the sendEmail function
+    await sendEmail(from, to, subject, text, user, pass, html);
+
+    // Send success response
+    res.status(200).json({
+      status: "success",
+      message: "Verification email sent successfully. Please check your email.",
+      data: null,
+    });
+  } catch (error) {
+    console.error("Error initiating registration:", error.message);
+    res.status(500).json({
+      status: "fail",
+      message: "Failed to initiate registration. Please try again later.",
+      error: error.message,
+      data: null,
+    });
+  }
+};
+
+exports.completeRegistration = async (req, res, next) => {
+  try {
+    const token = req.params.token;
+
+    // Verify and decode the token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (!decoded.email || !decoded.password) {
+      return res.status(400).json({
+        status: "fail",
+        message:
+          "Invalid Link. Unable to verify. Please again generate the request",
+        data: null,
+      });
+    }
+
+    // Create user in the database
+    const newUser = await User.create({
+      email: decoded.email,
+      password: decoded.password,
+    });
+
+    console.log("User registered successfully:", newUser);
 
     res.status(201).json({
       status: "success",
-      token,
-      message: "User registered successfully",
+      message: "User account created successfully.",
+      data: null,
     });
   } catch (error) {
-    console.error("Error during user registration:", error.message);
+    console.error("Error completing registration:", error.message);
     res.status(500).json({
+      status: "fail",
+      message: "Failed to complete registration. Please try again later.",
       error: error.message,
-      status: "User registration failed",
+      data: null,
     });
   }
 };
@@ -87,6 +153,66 @@ exports.login = async (req, res, next) => {
       status: "Server Error",
     });
     return next();
+  }
+};
+
+exports.changePassword = async (req, res, next) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    const userId = req.user.id; // Assuming user ID is available in request
+
+    // Check if both oldPassword and newPassword are provided
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Both oldPassword and newPassword are required.",
+        data: null,
+      });
+    }
+
+    // Find the user by userId
+    const user = await User.findById(userId).select("+password");
+
+    // If user not found
+    if (!user) {
+      return res.status(404).json({
+        status: "fail",
+        message: "User not found.",
+        data: null,
+      });
+    }
+
+    // Check if the old password matches the current password
+    const isMatch = await user.comparePassword(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Incorrect old password.",
+        data: null,
+      });
+    }
+
+    // Update user's password
+    user.password = newPassword;
+    await user.save();
+
+    // Optional: Revoke existing tokens if required
+    // Example: User logged out everywhere after changing password
+
+    // Respond with success message
+    res.status(200).json({
+      status: "success",
+      message: "Password updated successfully.",
+      data: null,
+    });
+  } catch (error) {
+    console.error("Error changing password:", error.message);
+    res.status(500).json({
+      status: "fail",
+      message: "Failed to change password. Please try again later.",
+      error: error.message,
+      data: null,
+    });
   }
 };
 
