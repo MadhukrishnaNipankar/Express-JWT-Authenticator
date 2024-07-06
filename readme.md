@@ -26,39 +26,11 @@ EMAIL_VERIFICATION_ROUTE=verify-email               # Route for email verificati
 LOGIN_URL=https://www.instagram.com/                #Login page link of your application
 ```
 
-## Usage
+## Sample Usage
 
-### 1. Importing Functions and Loading Environment Variables
+### 1. Make sure, your express application is running and is successfully connected to the database
 
-After installing `express-jwt-authenticator`, import the necessary functions into your project. Make sure to load your environment variables using a package like `dotenv`.
-
-```js
-// Import the required functions
-const {
-  initiateRegistration,
-  completeRegistration,
-  login,
-  protect,
-  deleteUserAccount,
-  changePassword,
-} = require("express-jwt-authenticator");
-
-// Adding Config File Contents to process
-require("dotenv").config({ path: "./config.env" });
-```
-
-### 2. Write a JSON middleware for accessing json data
-
-```js
-const express = require("express");
-const app = express();
-
-app.use(express.json()); // Middleware to parse JSON bodies
-```
-
-### 3. Make sure, your express application is running and is successfully connected to the database
-
-### 4. Use the Authentication Methods in Your Express App/Sample Usage
+### 2. Use the Authentication Methods in Your Express App/Sample Usage
 
 Integrate the provided authentication functions into your Express application by setting up routes as shown below:
 
