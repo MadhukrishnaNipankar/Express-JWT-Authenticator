@@ -24,6 +24,7 @@ EMAIL_PASS=your_email_password_or_app_password       # Password or app-specific 
 HOST=http://localhost:8000                           # Base URL for your application
 EMAIL_VERIFICATION_ROUTE=verify-email               # Route for email verification link
 LOGIN_URL=https://www.instagram.com/                #Login page link of your application
+CONNECTION_STRING=`your database connection string` #connection url for mongodb
 ```
 
 ## Sample Usage
