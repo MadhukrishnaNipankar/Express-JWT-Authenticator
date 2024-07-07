@@ -55,7 +55,7 @@ require("dotenv").config({ path: "./config.env" });
 const PORT = process.env.PORT || 8000;
 const CONNECTION_STRING = process.env.CONNECTION_STRING;
 
-const connectDb = require("./db");
+const connectDb = require("./db.js");
 
 // Load environment variables from .env file
 require("dotenv").config();
