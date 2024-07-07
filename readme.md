@@ -259,10 +259,10 @@ app.listen(PORT, () => {
 });
 ```
 
-### `sendEmail`
+### `sendMail`
 
 - **Description:** Sends an email using the Gmail SMTP service. Useful for sending verification emails, notifications, and other communications.
-- **Function Call:** `sendEmail(from, to, subject, text,from,password/app password, html)`
+- **Function Call:** `sendMail(from, to, subject, text,from,password/app password, html)`
 - **Parameters:**
   - `from` (string, required): The email address of the sender.
   - `to` (string, required): The email address of the recipient.
