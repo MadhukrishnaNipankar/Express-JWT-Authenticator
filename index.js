@@ -9,6 +9,8 @@ const {
   deleteUserAccount,
 } = require("./Controllers/authControllers");
 
+const sendMail = require("./Services/mail");
+
 // Export the User model and authentication functions
 module.exports = {
   User,
@@ -18,4 +20,5 @@ module.exports = {
   changePassword,
   protect,
   deleteUserAccount,
+  sendMail,
 };

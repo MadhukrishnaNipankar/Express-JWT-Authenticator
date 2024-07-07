@@ -258,3 +258,43 @@ app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 ```
+
+### `sendEmail`
+
+- **Description:** Sends an email using the Gmail SMTP service. Useful for sending verification emails, notifications, and other communications.
+- **Function Call:** `sendEmail(from, to, subject, text, html)`
+- **Parameters:**
+  - `from` (string, required): The email address of the sender.
+  - `to` (string, required): The email address of the recipient.
+  - `subject` (string, required): The subject line of the email.
+  - `text` (string, optional): The plain text version of the email content.
+  - `html` (string, optional): The HTML version of the email content.
+- **Returns:** A Promise that resolves when the email is successfully sent.
+
+**Example Usage:**
+
+```js
+const { sendEmail } = require("express-jwt-authenticator");
+
+// Example function to send a password reset email
+const sendPasswordResetEmail = async (userEmail, resetToken) => {
+  const resetLink = `${process.env.HOST}/reset-password/${resetToken}`;
+
+  try {
+    await sendEmail(
+      "support@yourdomain.com", // from
+      userEmail, // to
+      "Password Reset Request", // subject
+      `Click the link to reset your password: ${resetLink}`, // text
+      `<p>To reset your password, please click the link below:</p>
+       <a href="${resetLink}">Reset Password</a>` // html
+    );
+    console.log("Password reset email sent successfully.");
+  } catch (error) {
+    console.error("Error sending password reset email:", error);
+  }
+};
+
+// Usage of the function
+sendPasswordResetEmail("user@example.com", "resetToken456");
+```

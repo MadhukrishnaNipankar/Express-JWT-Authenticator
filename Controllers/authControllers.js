@@ -261,18 +261,17 @@ exports.protect = async (req, res, next) => {
     }
 
     if (!token) {
-      res.status(401).json({
+      return res.status(401).json({
         error: "You are not logged in! Please Login to get access",
         status: "Invalid request",
       });
-      return next();
     }
     // 2) validate the token
     let decoded;
     try {
       decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
     } catch (err) {
-      res.status(401).json({
+      return res.status(401).json({
         error: "The user belonging to the token does no longer exist",
         status: "Invalid request",
       });
@@ -281,7 +280,7 @@ exports.protect = async (req, res, next) => {
     // 3) check if user still exists
     const freshUser = await User.findById(decoded.id);
     if (!freshUser) {
-      res.status(401).json({
+      return res.status(401).json({
         error: "Invalid Token!",
         status: "Invalid request",
       });
@@ -292,12 +291,11 @@ exports.protect = async (req, res, next) => {
     //  All the above cases have passed!  Therefore it is an authenticated request! Hence calling next()
     next();
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       status: "fail",
       error: "Something went wrong! Please try again later",
       error: error.message,
     });
-    return next();
   }
 };
 
@@ -307,20 +305,19 @@ exports.deleteUserAccount = async (req, res, next) => {
     const deletedUser = await User.findByIdAndDelete(userId);
 
     if (!deletedUser) {
-      res.status(404).json({
+      return res.status(404).json({
         error: "User not found.",
         status: "Deletion failed",
       });
-      return next();
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       status: "success",
       message: "User account deleted successfully",
     });
   } catch (error) {
     console.error("Error during deleting user account:", error.message);
-    res.status(500).json({
+    return res.status(500).json({
       error: error.message,
       status: "Deletion failed",
     });
