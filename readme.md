@@ -2,7 +2,7 @@
 
 express-jwt-authenticator is a powerful and secure Node.js authentication package that simplifies the implementation of JSON Web Token (JWT) based authentication in your applications. It provides a robust and flexible solution for user registration, login, and protected route management, ensuring a seamless and secure user experience.
 
-Provides you Methods for _registration_, _login_, _user account deletion_, _password change_, _password verification through email_ and a middleware for protecting other routes named _protect_.
+Provides you Methods for _registration_, _login_, _user account deletion_, _password change_,_email sending method_, _password verification through email_ and a middleware for protecting other routes named _protect_.
 
 ## Installation
 
