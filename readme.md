@@ -262,39 +262,41 @@ app.listen(PORT, () => {
 ### `sendEmail`
 
 - **Description:** Sends an email using the Gmail SMTP service. Useful for sending verification emails, notifications, and other communications.
-- **Function Call:** `sendEmail(from, to, subject, text, html)`
+- **Function Call:** `sendEmail(from, to, subject, text,from,password/app password, html)`
 - **Parameters:**
   - `from` (string, required): The email address of the sender.
   - `to` (string, required): The email address of the recipient.
   - `subject` (string, required): The subject line of the email.
-  - `text` (string, optional): The plain text version of the email content.
+  - `text` (string, required): The plain text version of the email content.
+  - `from` (string, required): The email address of the sender.
+  - `app password/password` (string,required): The password or the app password of the email.
   - `html` (string, optional): The HTML version of the email content.
 - **Returns:** A Promise that resolves when the email is successfully sent.
 
 **Example Usage:**
 
 ```js
-const { sendEmail } = require("express-jwt-authenticator");
+const { sendMail } = require("express-jwt-authenticator");
 
-// Example function to send a password reset email
-const sendPasswordResetEmail = async (userEmail, resetToken) => {
-  const resetLink = `${process.env.HOST}/reset-password/${resetToken}`;
-
-  try {
-    await sendEmail(
-      "support@yourdomain.com", // from
-      userEmail, // to
-      "Password Reset Request", // subject
-      `Click the link to reset your password: ${resetLink}`, // text
-      `<p>To reset your password, please click the link below:</p>
-       <a href="${resetLink}">Reset Password</a>` // html
+// Example function to send an email through a protected route
+  app.get("/myroute", protect, async (req, res) => {
+    try {
+      await sendMail(
+        process.env.EMAIL_USER, // from
+        "userEmail@gmail.com", // to
+        "Welcome to our application", // subject
+        `Hello user, We appreciate your interest in our application, and that's really nice of you. Thankyou!`, // text
+        process.env.EMAIL_USER, //from
+        process.env.EMAIL_PASS  //app password, email password
+      );
+      console.log("email sent successfully.");
+    } catch (error) {
+      console.error("Error sending email:", error);
+    }
+    return res.send(
+      "Protected route, only authenticated users can access this."
     );
-    console.log("Password reset email sent successfully.");
-  } catch (error) {
-    console.error("Error sending password reset email:", error);
-  }
+  });
 };
 
-// Usage of the function
-sendPasswordResetEmail("user@example.com", "resetToken456");
 ```
